@@ -8,6 +8,7 @@ import { useTask, useUpdateTask } from "@/hooks/use-task-queries";
 import { useUsers } from "@/hooks/use-user-queries";
 import { EditableTitle } from "@/features/tasks/editable-title";
 import { TaskDetailSkeleton } from "@/features/tasks/task-detail-skeleton";
+import { TaskComments } from "@/features/tasks/task-comments";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -99,156 +100,161 @@ export default function TaskDetailPage({
   }
 
   return (
-    <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_300px]">
-      {/* Main content */}
-      <div className="space-y-6">
-        <EditableTitle
-          value={task.title}
-          onSave={(title) => handleUpdate("title", title)}
-        />
+    <div className="space-y-8">
+      <div className="grid grid-cols-1 gap-8 lg:grid-cols-[1fr_300px]">
+        {/* Main content */}
+        <div className="space-y-6">
+          <EditableTitle
+            value={task.title}
+            onSave={(title) => handleUpdate("title", title)}
+          />
 
-        {/* Status and priority */}
-        <div className="flex flex-wrap gap-3">
-          <Select
-            value={task.status}
-            onValueChange={(v) => handleUpdate("status", v)}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {STATUS_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  <Badge
-                    variant="secondary"
-                    className={STATUS_COLORS[opt.value]}
-                  >
-                    {opt.label}
-                  </Badge>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+          {/* Status and priority */}
+          <div className="flex flex-wrap gap-3">
+            <Select
+              value={task.status}
+              onValueChange={(v) => handleUpdate("status", v)}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {STATUS_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <Badge
+                      variant="secondary"
+                      className={STATUS_COLORS[opt.value]}
+                    >
+                      {opt.label}
+                    </Badge>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
 
-          <Select
-            value={task.priority}
-            onValueChange={(v) => handleUpdate("priority", v)}
-          >
-            <SelectTrigger className="w-40">
-              <SelectValue />
-            </SelectTrigger>
-            <SelectContent>
-              {PRIORITY_OPTIONS.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>
-                  <Badge
-                    variant="secondary"
-                    className={PRIORITY_COLORS[opt.value]}
-                  >
-                    {opt.label}
+            <Select
+              value={task.priority}
+              onValueChange={(v) => handleUpdate("priority", v)}
+            >
+              <SelectTrigger className="w-40">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    <Badge
+                      variant="secondary"
+                      className={PRIORITY_COLORS[opt.value]}
+                    >
+                      {opt.label}
+                    </Badge>
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          {/* Description */}
+          <div className="space-y-2">
+            <Label>Description</Label>
+            <Textarea
+              defaultValue={task.description}
+              rows={6}
+              onBlur={(e) => {
+                if (e.target.value !== task.description) {
+                  handleUpdate("description", e.target.value);
+                }
+              }}
+              placeholder="Add a description..."
+            />
+          </div>
+
+          {/* Tags */}
+          <div className="space-y-2">
+            <Label>Tags</Label>
+            <div className="flex flex-wrap gap-2">
+              {task.tags.length > 0 ? (
+                task.tags.map((tag) => (
+                  <Badge key={tag} variant="outline">
+                    {tag}
                   </Badge>
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
+                ))
+              ) : (
+                <span className="text-sm text-muted-foreground">No tags</span>
+              )}
+            </div>
+          </div>
         </div>
 
-        {/* Description */}
-        <div className="space-y-2">
-          <Label>Description</Label>
-          <Textarea
-            defaultValue={task.description}
-            rows={6}
-            onBlur={(e) => {
-              if (e.target.value !== task.description) {
-                handleUpdate("description", e.target.value);
+        {/* Metadata sidebar */}
+        <div className="space-y-6 rounded-lg border p-4 h-fit">
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              <UserIcon className="size-3.5" />
+              Assignee
+            </Label>
+            <Select
+              value={task.assigneeId ?? "unassigned"}
+              onValueChange={(v) =>
+                handleUpdate("assigneeId", v === "unassigned" ? null : v)
               }
-            }}
-            placeholder="Add a description..."
-          />
-        </div>
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Unassigned" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="unassigned">Unassigned</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
 
-        {/* Tags */}
-        <div className="space-y-2">
-          <Label>Tags</Label>
-          <div className="flex flex-wrap gap-2">
-            {task.tags.length > 0 ? (
-              task.tags.map((tag) => (
-                <Badge key={tag} variant="outline">
-                  {tag}
-                </Badge>
-              ))
-            ) : (
-              <span className="text-sm text-muted-foreground">No tags</span>
-            )}
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              <Calendar className="size-3.5" />
+              Due Date
+            </Label>
+            <Input
+              type="date"
+              defaultValue={task.dueDate?.split("T")[0] ?? ""}
+              onChange={(e) => {
+                handleUpdate("dueDate", e.target.value || null);
+              }}
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label className="flex items-center gap-1.5">
+              <Link2 className="size-3.5" />
+              Project
+            </Label>
+            <button
+              className="text-sm text-primary hover:underline text-left"
+              onClick={() => router.push(`/projects/${task.projectId}`)}
+            >
+              View project
+            </button>
+          </div>
+
+          <div className="border-t pt-4 space-y-3">
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Clock className="size-3" />
+              <span>Created {formatDate(task.createdAt)}</span>
+            </div>
+            <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+              <Clock className="size-3" />
+              <span>Updated {formatDate(task.updatedAt)}</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Metadata sidebar */}
-      <div className="space-y-6 rounded-lg border p-4 h-fit">
-        <div className="space-y-2">
-          <Label className="flex items-center gap-1.5">
-            <UserIcon className="size-3.5" />
-            Assignee
-          </Label>
-          <Select
-            value={task.assigneeId ?? "unassigned"}
-            onValueChange={(v) =>
-              handleUpdate("assigneeId", v === "unassigned" ? null : v)
-            }
-          >
-            <SelectTrigger>
-              <SelectValue placeholder="Unassigned" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="unassigned">Unassigned</SelectItem>
-              {users.map((user) => (
-                <SelectItem key={user.id} value={user.id}>
-                  {user.name}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
-
-        <div className="space-y-2">
-          <Label className="flex items-center gap-1.5">
-            <Calendar className="size-3.5" />
-            Due Date
-          </Label>
-          <Input
-            type="date"
-            defaultValue={task.dueDate?.split("T")[0] ?? ""}
-            onChange={(e) => {
-              handleUpdate("dueDate", e.target.value || null);
-            }}
-          />
-        </div>
-
-        <div className="space-y-2">
-          <Label className="flex items-center gap-1.5">
-            <Link2 className="size-3.5" />
-            Project
-          </Label>
-          <button
-            className="text-sm text-primary hover:underline text-left"
-            onClick={() => router.push(`/projects/${task.projectId}`)}
-          >
-            View project
-          </button>
-        </div>
-
-        <div className="border-t pt-4 space-y-3">
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Clock className="size-3" />
-            <span>Created {formatDate(task.createdAt)}</span>
-          </div>
-          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
-            <Clock className="size-3" />
-            <span>Updated {formatDate(task.updatedAt)}</span>
-          </div>
-        </div>
-      </div>
+      {/* Comments section */}
+      <TaskComments taskId={id} />
     </div>
   );
 }
