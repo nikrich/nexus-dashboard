@@ -57,7 +57,7 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
             <p className="text-muted-foreground mt-2">{project.description}</p>
           </div>
 
-          <div className="flex items-center gap-6 pt-4 border-t">
+          <div className="flex flex-col sm:flex-row sm:items-center gap-4 sm:gap-6 pt-4 border-t">
             <div className="flex items-center gap-2">
               <User className="h-4 w-4 text-muted-foreground" />
               <span className="text-sm text-muted-foreground">Owner:</span>
