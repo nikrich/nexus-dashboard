@@ -4,6 +4,7 @@ import { ThemeProvider } from "next-themes";
 import { Toaster } from "@/components/ui/sonner";
 import { AuthProvider } from "@/features/auth/auth-provider";
 import { QueryProvider } from "@/lib/query-provider";
+import { CommandPalette } from "@/components/command-palette";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -40,6 +41,7 @@ export default function RootLayout({
           >
             <AuthProvider>
               {children}
+              <CommandPalette />
             </AuthProvider>
             <Toaster />
           </ThemeProvider>
