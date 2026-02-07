@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useMemo } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useCurrentUser, useUpdateUser } from "@/hooks/use-user-queries";
@@ -25,24 +25,22 @@ export function ProfileForm() {
     user?.id || ""
   );
 
-  const [formData, setFormData] = useState<ProfileFormData>({
-    name: "",
-    avatarUrl: "",
-  });
+  // Derive initial form data from the most up-to-date user data
+  const initialFormData = useMemo(() => {
+    const userData = currentUserData?.data || user;
+    if (userData) {
+      return {
+        name: userData.name,
+        avatarUrl: userData.avatarUrl || "",
+      };
+    }
+    return { name: "", avatarUrl: "" };
+  }, [currentUserData?.data, user]);
+
+  const [formData, setFormData] = useState<ProfileFormData>(initialFormData);
   const [errors, setErrors] = useState<
     Partial<Record<keyof ProfileFormData, string>>
   >({});
-
-  // Initialize form with current user data
-  useEffect(() => {
-    const userData = currentUserData?.data || user;
-    if (userData) {
-      setFormData({
-        name: userData.name,
-        avatarUrl: userData.avatarUrl || "",
-      });
-    }
-  }, [currentUserData, user]);
 
   function handleChange(e: React.ChangeEvent<HTMLInputElement>) {
     const { name, value } = e.target;
