@@ -177,9 +177,9 @@ export default function TaskListPage({
 
   return (
     <div className="space-y-4">
-      <div>
+      <div className="space-y-1">
         <h1 className="text-2xl font-bold">Tasks</h1>
-        <p className="text-muted-foreground">
+        <p className="text-sm sm:text-base text-muted-foreground">
           {total} task{total !== 1 ? "s" : ""} in this project
         </p>
       </div>
@@ -198,7 +198,7 @@ export default function TaskListPage({
         onBulkDelete={handleBulkDelete}
       />
 
-      <div className="rounded-md border">
+      <div className="rounded-md border overflow-x-auto">
         <Table>
           <TableHeader>
             {table.getHeaderGroups().map((headerGroup) => (
@@ -260,7 +260,7 @@ export default function TaskListPage({
       </div>
 
       {/* Pagination */}
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div className="flex items-center gap-2">
           <span className="text-sm text-muted-foreground">Rows per page</span>
           <Select

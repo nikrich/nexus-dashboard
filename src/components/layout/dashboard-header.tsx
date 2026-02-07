@@ -50,8 +50,8 @@ export function DashboardHeader() {
       <SidebarTrigger className="-ml-1" />
       <Separator orientation="vertical" className="mr-2 h-4" />
 
-      <Breadcrumb className="flex-1">
-        <BreadcrumbList>
+      <Breadcrumb className="flex-1 min-w-0">
+        <BreadcrumbList className="overflow-x-auto flex-nowrap">
           {breadcrumbs.length === 0 ? (
             <BreadcrumbItem>
               <BreadcrumbPage>Dashboard</BreadcrumbPage>

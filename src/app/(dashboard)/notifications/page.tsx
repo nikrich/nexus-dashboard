@@ -55,10 +55,10 @@ export default function NotificationsPage() {
 
   return (
     <div className="space-y-4">
-      <div className="flex items-center justify-between">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold">Notifications</h1>
-          <p className="text-muted-foreground">
+          <p className="text-sm sm:text-base text-muted-foreground">
             {total === 0 ? "No notifications" : `You have ${unreadCount} unread notification${unreadCount !== 1 ? "s" : ""}`}
           </p>
         </div>
@@ -88,7 +88,7 @@ export default function NotificationsPage() {
         <Card>
           <CardContent className="pt-6 text-center">
             <p className="text-muted-foreground">
-              You're all caught up! No notifications at the moment.
+              You&apos;re all caught up! No notifications at the moment.
             </p>
           </CardContent>
         </Card>
@@ -101,7 +101,7 @@ export default function NotificationsPage() {
                 className={notification.read ? "" : "border-primary/50 bg-primary/5"}
               >
                 <CardHeader className="pb-3">
-                  <div className="flex items-start justify-between gap-4">
+                  <div className="flex flex-col sm:flex-row sm:items-start justify-between gap-3 sm:gap-4">
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <CardTitle className="text-base">
@@ -121,6 +121,7 @@ export default function NotificationsPage() {
                         size="sm"
                         onClick={() => handleMarkAsRead(notification.id)}
                         disabled={markAsReadMutation.isPending}
+                        className="self-start sm:self-auto"
                       >
                         Mark as read
                       </Button>
@@ -141,7 +142,7 @@ export default function NotificationsPage() {
           </div>
 
           {totalPages > 1 && (
-            <div className="flex items-center justify-between pt-4">
+            <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 pt-4">
               <p className="text-sm text-muted-foreground">
                 Page {currentPage} of {totalPages}
               </p>
