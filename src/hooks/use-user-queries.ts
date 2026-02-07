@@ -16,6 +16,14 @@ export function useCurrentUser() {
   });
 }
 
+export function useUser(id: string) {
+  return useQuery({
+    queryKey: userKeys.detail(id),
+    queryFn: () => apiClient.get<ApiResponse<User>>(`/api/users/${id}`),
+    enabled: !!id,
+  });
+}
+
 export function useUsers() {
   return useQuery({
     queryKey: userKeys.lists(),
