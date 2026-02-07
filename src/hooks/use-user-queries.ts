@@ -23,6 +23,14 @@ export function useUsers() {
   });
 }
 
+export function useUser(id: string) {
+  return useQuery({
+    queryKey: userKeys.detail(id),
+    queryFn: () => apiClient.get<ApiResponse<User>>(`/api/users/${id}`),
+    enabled: !!id,
+  });
+}
+
 export function useUpdateUser(id: string) {
   const queryClient = useQueryClient();
 
