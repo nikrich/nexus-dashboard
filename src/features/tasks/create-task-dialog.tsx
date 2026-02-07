@@ -8,7 +8,13 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import {
   Dialog,
   DialogContent,
@@ -40,6 +46,13 @@ const createTaskSchema = z.object({
 
 type CreateTaskFormData = z.infer<typeof createTaskSchema>;
 
+const PRIORITY_OPTIONS: { value: TaskPriority; label: string }[] = [
+  { value: "low", label: "Low" },
+  { value: "medium", label: "Medium" },
+  { value: "high", label: "High" },
+  { value: "critical", label: "Critical" },
+];
+
 interface CreateTaskDialogProps {
   projectId: string;
   trigger?: React.ReactNode;
@@ -53,6 +66,7 @@ export function CreateTaskDialog({
   const [errors, setErrors] = useState<
     Partial<Record<keyof CreateTaskFormData, string>>
   >({});
+  const [priority, setPriority] = useState<TaskPriority>("medium");
   const [tagInput, setTagInput] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const createTask = useCreateTask(projectId);
@@ -76,7 +90,7 @@ export function CreateTaskDialog({
     const data = {
       title: formData.get("title") as string,
       description: formData.get("description") as string,
-      priority: formData.get("priority") as TaskPriority,
+      priority: priority,
       assigneeId: formData.get("assigneeId") as string | undefined,
       dueDate: formData.get("dueDate") as string | undefined,
       tags: tags.length > 0 ? tags : undefined,
@@ -102,6 +116,7 @@ export function CreateTaskDialog({
       await createTask.mutateAsync(result.data);
       toast.success("Task created successfully");
       setOpen(false);
+      setPriority("medium");
       setTags([]);
       (e.target as HTMLFormElement).reset();
     } catch (err) {
@@ -158,11 +173,17 @@ export function CreateTaskDialog({
 
           <div className="space-y-2">
             <Label htmlFor="task-priority">Priority</Label>
-            <Select id="task-priority" name="priority" defaultValue="medium" required>
-              <option value="low">Low</option>
-              <option value="medium">Medium</option>
-              <option value="high">High</option>
-              <option value="critical">Critical</option>
+            <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
+              <SelectTrigger className="w-full">
+                <SelectValue />
+              </SelectTrigger>
+              <SelectContent>
+                {PRIORITY_OPTIONS.map((opt) => (
+                  <SelectItem key={opt.value} value={opt.value}>
+                    {opt.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
             </Select>
             {errors.priority && (
               <p className="text-sm text-destructive">{errors.priority}</p>
@@ -242,6 +263,7 @@ export function CreateTaskDialog({
               variant="outline"
               onClick={() => {
                 setOpen(false);
+                setPriority("medium");
                 setTags([]);
               }}
             >
