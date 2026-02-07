@@ -11,7 +11,7 @@ test.describe('Authentication Flow', () => {
     await page.goto('/login');
 
     await expect(page).toHaveTitle(/Nexus Dashboard/i);
-    await expect(page.locator('h1, h2').filter({ hasText: /sign in|login/i })).toBeVisible();
+    await expect(page.getByText('Sign in')).toBeVisible();
     await expect(page.getByLabel('Email')).toBeVisible();
     await expect(page.getByLabel('Password')).toBeVisible();
     await expect(page.getByRole('button', { name: /sign in/i })).toBeVisible();
@@ -21,7 +21,7 @@ test.describe('Authentication Flow', () => {
     await page.goto('/register');
 
     await expect(page).toHaveTitle(/Nexus Dashboard/i);
-    await expect(page.locator('h1, h2').filter({ hasText: /create account|register|sign up/i })).toBeVisible();
+    await expect(page.getByText('Create account')).toBeVisible();
     await expect(page.getByLabel('Name')).toBeVisible();
     await expect(page.getByLabel('Email')).toBeVisible();
     await expect(page.getByLabel('Password', { exact: true })).toBeVisible();
