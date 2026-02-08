@@ -24,6 +24,7 @@ describe("Status color utilities", () => {
     })
 
     it("should return todo color as default for unknown status", () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const color = getStatusColor("unknown" as any)
       expect(color).toBe("bg-status-todo text-status-todo-foreground")
     })
@@ -51,6 +52,7 @@ describe("Status color utilities", () => {
     })
 
     it("should return status value as fallback for unknown status", () => {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const label = getStatusLabel("unknown" as any)
       expect(label).toBe("unknown")
     })
