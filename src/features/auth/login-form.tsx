@@ -54,7 +54,8 @@ export function LoginForm() {
       );
       setAuth(res.data.token, res.data.user);
       const callbackUrl = searchParams.get("callbackUrl") ?? "/";
-      router.push(callbackUrl);
+      // Use hard navigation to ensure middleware sees the freshly-set cookie
+      window.location.href = callbackUrl;
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Login failed");
     } finally {
