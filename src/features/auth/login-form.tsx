@@ -53,7 +53,7 @@ export function LoginForm() {
         result.data
       );
       setAuth(res.data.token, res.data.user);
-      const callbackUrl = searchParams.get("callbackUrl") ?? "/";
+      const callbackUrl = searchParams.get("callbackUrl") || "/projects";
       // Use hard navigation to ensure middleware sees the freshly-set cookie
       window.location.href = callbackUrl;
     } catch (err) {

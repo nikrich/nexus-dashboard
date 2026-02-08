@@ -64,7 +64,7 @@ export function RegisterForm() {
       );
       setAuth(res.data.token, res.data.user);
       // Use hard navigation to ensure middleware sees the freshly-set cookie
-      window.location.href = "/";
+      window.location.href = "/projects";
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Registration failed");
     } finally {
