@@ -17,6 +17,7 @@ export const taskKeys = {
     [...taskKeys.lists(), params] as const,
   details: () => [...taskKeys.all, "detail"] as const,
   detail: (id: string) => [...taskKeys.details(), id] as const,
+  stats: () => [...taskKeys.all, "stats"] as const,
 };
 
 interface TaskListParams {
@@ -98,6 +99,32 @@ export function useDeleteTask() {
       apiClient.delete<ApiResponse<void>>(`/api/tasks/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: taskKeys.lists() });
+    },
+  });
+}
+
+interface GlobalTaskStatsParams {
+  assigneeId?: string;
+}
+
+export function useGlobalTaskStats(params?: GlobalTaskStatsParams) {
+  return useQuery({
+    queryKey: taskKeys.stats(),
+    queryFn: async () => {
+      const searchParams = new URLSearchParams();
+      searchParams.set("pageSize", "1");
+      if (params?.assigneeId) {
+        searchParams.set("assigneeId", params.assigneeId);
+      }
+
+      try {
+        const response = await apiClient.get<ApiResponse<PaginatedResponse<Task>>>(
+          `/api/tasks?${searchParams.toString()}`
+        );
+        return { total: response.data.total };
+      } catch {
+        return { total: 0 };
+      }
     },
   });
 }
