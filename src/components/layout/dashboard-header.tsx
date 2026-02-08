@@ -1,5 +1,6 @@
 "use client";
 
+import React from "react";
 import { usePathname } from "next/navigation";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { Separator } from "@/components/ui/separator";
@@ -60,16 +61,18 @@ export function DashboardHeader() {
             breadcrumbs.map((crumb, index) => {
               const isLast = index === breadcrumbs.length - 1;
               return (
-                <BreadcrumbItem key={crumb.href}>
+                <React.Fragment key={crumb.href}>
                   {index > 0 && <BreadcrumbSeparator />}
-                  {isLast ? (
-                    <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
-                  ) : (
-                    <BreadcrumbLink href={crumb.href}>
-                      {crumb.label}
-                    </BreadcrumbLink>
-                  )}
-                </BreadcrumbItem>
+                  <BreadcrumbItem>
+                    {isLast ? (
+                      <BreadcrumbPage>{crumb.label}</BreadcrumbPage>
+                    ) : (
+                      <BreadcrumbLink href={crumb.href}>
+                        {crumb.label}
+                      </BreadcrumbLink>
+                    )}
+                  </BreadcrumbItem>
+                </React.Fragment>
               );
             })
           )}
