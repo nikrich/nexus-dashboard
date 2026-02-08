@@ -39,7 +39,7 @@ const createTaskSchema = z.object({
     .optional()
     .default(""),
   priority: z.enum(["low", "medium", "high", "critical"], {
-    required_error: "Priority is required",
+    message: "Priority is required",
   }),
   status: z.enum(["todo", "in_progress", "review", "done"]).optional(),
   assigneeId: z.string().optional(),

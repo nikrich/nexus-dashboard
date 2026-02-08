@@ -17,6 +17,14 @@ vi.mock("@/hooks/use-project-queries", () => ({
   useProjects: vi.fn(),
 }));
 
+// Mock auth store - default to authenticated
+vi.mock("@/stores/auth-store", () => ({
+  useAuthStore: vi.fn((selector) => {
+    const state = { isAuthenticated: true, token: "test-token", user: null };
+    return selector ? selector(state) : state;
+  }),
+}));
+
 import { useProjects } from "@/hooks/use-project-queries";
 
 const createWrapper = () => {
