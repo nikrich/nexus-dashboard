@@ -32,7 +32,11 @@ async function request<T>(
   if (response.status === 401) {
     if (typeof window !== "undefined") {
       localStorage.removeItem("nexus-token");
-      window.location.href = "/login";
+      document.cookie = "nexus-token=; path=/; max-age=0";
+      // Only redirect if not already on the login page to prevent reload loops
+      if (!window.location.pathname.startsWith("/login")) {
+        window.location.href = "/login";
+      }
     }
     throw new Error("Unauthorized");
   }

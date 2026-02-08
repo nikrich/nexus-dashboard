@@ -21,14 +21,16 @@ export const projectKeys = {
   members: (projectId: string) => [...projectKeys.detail(projectId), "members"] as const,
 };
 
-export function useProjects(params?: { page?: number; pageSize?: number; search?: string }) {
+export function useProjects(params?: { page?: number; pageSize?: number; search?: string; enabled?: boolean }) {
+  const { enabled = true, ...queryParams } = params ?? {};
   return useQuery({
-    queryKey: projectKeys.list(params),
+    queryKey: projectKeys.list(queryParams),
+    enabled,
     queryFn: () => {
       const searchParams = new URLSearchParams();
-      if (params?.page) searchParams.set("page", String(params.page));
-      if (params?.pageSize) searchParams.set("pageSize", String(params.pageSize));
-      if (params?.search) searchParams.set("search", params.search);
+      if (queryParams.page) searchParams.set("page", String(queryParams.page));
+      if (queryParams.pageSize) searchParams.set("pageSize", String(queryParams.pageSize));
+      if (queryParams.search) searchParams.set("search", queryParams.search);
       const qs = searchParams.toString();
       return apiClient.get<ApiResponse<PaginatedResponse<Project>>>(
         `/api/projects${qs ? `?${qs}` : ""}`

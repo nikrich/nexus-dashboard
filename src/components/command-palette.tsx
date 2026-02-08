@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useProjects } from "@/hooks/use-project-queries";
+import { useAuthStore } from "@/stores/auth-store";
 import {
   CommandDialog,
   CommandEmpty,
@@ -15,12 +16,13 @@ import { FileText } from "lucide-react";
 
 export function CommandPalette() {
   const router = useRouter();
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [isOpen, setIsOpen] = useState(false);
   const [search, setSearch] = useState("");
 
-  // Fetch projects with search
-  const { data, isLoading } = useProjects({ search });
-  const projects = data?.data.items || [];
+  // Only fetch when authenticated to avoid 401 loops on login page
+  const { data, isLoading } = useProjects({ search, enabled: isAuthenticated });
+  const projects = isAuthenticated ? (data?.data.items || []) : [];
 
   // Handle keyboard shortcut (Cmd+K or Ctrl+K)
   useEffect(() => {
