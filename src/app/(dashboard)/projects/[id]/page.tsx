@@ -1,15 +1,74 @@
 "use client";
 
 import { use } from "react";
-import { useProject } from "@/hooks/use-project-queries";
+import { useProject, useProjectMembers, useRemoveProjectMember } from "@/hooks/use-project-queries";
 import { useUser } from "@/hooks/use-user-queries";
 import { Card } from "@/components/ui/card";
 import { Avatar } from "@/components/ui/avatar";
 import { Skeleton } from "@/components/ui/skeleton";
-import { CalendarDays, User } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { CalendarDays, User, Trash2 } from "lucide-react";
+import { AddMemberDialog } from "@/features/projects/add-member-dialog";
+import { toast } from "sonner";
 
 interface ProjectDetailPageProps {
   params: Promise<{ id: string }>;
+}
+
+interface MemberRowProps {
+  member: {
+    id: string;
+    userId: string;
+    role: string;
+  };
+  onRemove: (memberId: string) => void;
+  getRoleBadgeColor: (role: string) => string;
+}
+
+function MemberRow({ member, onRemove, getRoleBadgeColor }: MemberRowProps) {
+  const { data: userResponse, isLoading } = useUser(member.userId);
+  const user = userResponse?.data;
+
+  if (isLoading) {
+    return (
+      <div className="flex items-center gap-3">
+        <Skeleton className="h-10 w-10 rounded-full" />
+        <div className="space-y-2">
+          <Skeleton className="h-4 w-32" />
+          <Skeleton className="h-3 w-24" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!user) return null;
+
+  return (
+    <div className="flex items-center justify-between">
+      <div className="flex items-center gap-3">
+        <Avatar className="h-10 w-10">
+          <div className="flex h-full w-full items-center justify-center bg-primary text-primary-foreground">
+            {user.name.charAt(0).toUpperCase()}
+          </div>
+        </Avatar>
+        <div>
+          <p className="text-sm font-medium">{user.name}</p>
+          <p className="text-xs text-muted-foreground">{user.email}</p>
+          <span className={`inline-block mt-1 rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${getRoleBadgeColor(member.role)}`}>
+            {member.role.charAt(0).toUpperCase() + member.role.slice(1)}
+          </span>
+        </div>
+      </div>
+      <Button
+        variant="ghost"
+        size="sm"
+        onClick={() => onRemove(member.id)}
+        className="text-destructive hover:text-destructive hover:bg-destructive/10"
+      >
+        <Trash2 className="h-4 w-4" />
+      </Button>
+    </div>
+  );
 }
 
 export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
@@ -21,6 +80,11 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
     project?.ownerId ?? ""
   );
   const owner = ownerResponse?.data;
+
+  const { data: membersResponse, isLoading: isLoadingMembers } = useProjectMembers(id);
+  const members = membersResponse?.data || [];
+
+  const removeMember = useRemoveProjectMember(id);
 
   if (isLoadingProject) {
     return (
@@ -45,6 +109,34 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
       month: "long",
       day: "numeric",
     });
+  };
+
+  const handleRemoveMember = async (memberId: string) => {
+    if (!confirm("Are you sure you want to remove this member?")) {
+      return;
+    }
+
+    try {
+      await removeMember.mutateAsync(memberId);
+      toast.success("Member removed successfully");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to remove member");
+    }
+  };
+
+  const getRoleBadgeColor = (role: string) => {
+    switch (role) {
+      case "owner":
+        return "bg-blue-50 text-blue-700 ring-blue-700/10";
+      case "admin":
+        return "bg-purple-50 text-purple-700 ring-purple-700/10";
+      case "member":
+        return "bg-green-50 text-green-700 ring-green-700/10";
+      case "viewer":
+        return "bg-gray-50 text-gray-700 ring-gray-700/10";
+      default:
+        return "bg-gray-50 text-gray-700 ring-gray-700/10";
+    }
   };
 
   return (
@@ -93,7 +185,19 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
 
       {/* Project Members */}
       <Card className="p-6">
-        <h2 className="text-xl font-semibold mb-4">Project Members</h2>
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold">Project Members</h2>
+          {project && (
+            <AddMemberDialog
+              projectId={project.id}
+              ownerId={project.ownerId}
+              existingMemberIds={[
+                project.ownerId,
+                ...members.map((m) => m.userId),
+              ]}
+            />
+          )}
+        </div>
         <div className="space-y-4">
           {/* Owner as the first member */}
           {isLoadingOwner ? (
@@ -105,29 +209,55 @@ export default function ProjectDetailPage({ params }: ProjectDetailPageProps) {
               </div>
             </div>
           ) : owner ? (
-            <div className="flex items-center gap-3">
-              <Avatar className="h-10 w-10">
-                <div className="flex h-full w-full items-center justify-center bg-primary text-primary-foreground">
-                  {owner.name.charAt(0).toUpperCase()}
+            <div className="flex items-center justify-between">
+              <div className="flex items-center gap-3">
+                <Avatar className="h-10 w-10">
+                  <div className="flex h-full w-full items-center justify-center bg-primary text-primary-foreground">
+                    {owner.name.charAt(0).toUpperCase()}
+                  </div>
+                </Avatar>
+                <div>
+                  <p className="text-sm font-medium">{owner.name}</p>
+                  <p className="text-xs text-muted-foreground">{owner.email}</p>
+                  <span className={`inline-block mt-1 rounded-md px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${getRoleBadgeColor("owner")}`}>
+                    Owner
+                  </span>
                 </div>
-              </Avatar>
-              <div>
-                <p className="text-sm font-medium">{owner.name}</p>
-                <p className="text-xs text-muted-foreground">{owner.email}</p>
-                <span className="inline-block mt-1 rounded-md bg-blue-50 px-2 py-0.5 text-xs font-medium text-blue-700 ring-1 ring-inset ring-blue-700/10">
-                  Owner
-                </span>
               </div>
             </div>
           ) : null}
 
-          {/* Placeholder for additional members */}
-          <div className="pt-4 border-t">
-            <p className="text-sm text-muted-foreground">
-              Additional project members will be displayed here once member
-              management is implemented.
-            </p>
-          </div>
+          {/* Additional members */}
+          {isLoadingMembers ? (
+            <div className="pt-4 border-t space-y-4">
+              {[1, 2].map((i) => (
+                <div key={i} className="flex items-center gap-3">
+                  <Skeleton className="h-10 w-10 rounded-full" />
+                  <div className="space-y-2">
+                    <Skeleton className="h-4 w-32" />
+                    <Skeleton className="h-3 w-24" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : members.length > 0 ? (
+            <div className="pt-4 border-t space-y-4">
+              {members.map((member) => (
+                <MemberRow
+                  key={member.id}
+                  member={member}
+                  onRemove={handleRemoveMember}
+                  getRoleBadgeColor={getRoleBadgeColor}
+                />
+              ))}
+            </div>
+          ) : (
+            <div className="pt-4 border-t">
+              <p className="text-sm text-muted-foreground">
+                No additional members yet. Add members to collaborate on this project.
+              </p>
+            </div>
+          )}
         </div>
       </Card>
     </div>
