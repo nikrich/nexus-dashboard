@@ -14,6 +14,7 @@ import { apiClient } from "@/lib/api-client";
 import type { ApiResponse, Task, TaskStatus, UpdateTaskRequest } from "@/types";
 import { createTaskColumns } from "@/features/tasks/task-columns";
 import { TaskListToolbar } from "@/features/tasks/task-list-toolbar";
+import { CreateTaskDialog } from "@/features/tasks/create-task-dialog";
 import {
   Table,
   TableBody,
@@ -177,11 +178,14 @@ export default function TaskListPage({
 
   return (
     <div className="space-y-4">
-      <div className="space-y-1">
-        <h1 className="text-2xl font-bold">Tasks</h1>
-        <p className="text-sm sm:text-base text-muted-foreground">
-          {total} task{total !== 1 ? "s" : ""} in this project
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold">Tasks</h1>
+          <p className="text-sm sm:text-base text-muted-foreground">
+            {total} task{total !== 1 ? "s" : ""} in this project
+          </p>
+        </div>
+        <CreateTaskDialog projectId={projectId} />
       </div>
 
       <TaskListToolbar

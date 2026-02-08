@@ -20,6 +20,7 @@ import { useTasks, taskKeys } from "@/hooks/use-task-queries";
 import { apiClient } from "@/lib/api-client";
 import { KanbanColumn } from "@/features/tasks/kanban-column";
 import { KanbanCard } from "@/features/tasks/kanban-card";
+import { CreateTaskDialog } from "@/features/tasks/create-task-dialog";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { LayoutList, Kanban } from "lucide-react";
@@ -134,10 +135,12 @@ export default function KanbanBoardPage({
     [tasks, projectId, queryClient, updateTaskMutation]
   );
 
-  // eslint-disable-next-line @typescript-eslint/no-unused-vars
-  function handleAddTask(_status: TaskStatus) {
-    // Create task dialog is in DASH-011
-    toast.info("Create task functionality coming soon");
+  const [createTaskOpen, setCreateTaskOpen] = useState(false);
+  const [createTaskStatus, setCreateTaskStatus] = useState<TaskStatus>("todo");
+
+  function handleAddTask(status: TaskStatus) {
+    setCreateTaskStatus(status);
+    setCreateTaskOpen(true);
   }
 
   // View toggle
@@ -214,6 +217,13 @@ export default function KanbanBoardPage({
           {activeTask ? <KanbanCard task={activeTask} /> : null}
         </DragOverlay>
       </DndContext>
+
+      <CreateTaskDialog
+        projectId={projectId}
+        defaultStatus={createTaskStatus}
+        open={createTaskOpen}
+        onOpenChange={setCreateTaskOpen}
+      />
     </div>
   );
 }

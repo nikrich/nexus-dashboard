@@ -5,8 +5,9 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { useProjects } from "@/hooks/use-project-queries";
 import { useNotifications, useUnreadNotificationCount } from "@/hooks/use-notification-queries";
 import { useAuthStore } from "@/stores/auth-store";
-import { FolderKanban, ListChecks, Bell, Clock } from "lucide-react";
+import { FolderKanban, ListChecks, Bell, Clock, Plus } from "lucide-react";
 import Link from "next/link";
+import { CreateTaskDialog } from "@/features/tasks/create-task-dialog";
 
 function StatCard({
   title,
@@ -95,6 +96,29 @@ export default function DashboardPage() {
           isLoading={unreadCountLoading}
         />
       </div>
+
+      {/* Quick Actions */}
+      {projectsData && projectsData.data.items.length > 0 && (
+        <Card>
+          <CardHeader>
+            <CardTitle>Quick Actions</CardTitle>
+          </CardHeader>
+          <CardContent className="flex flex-wrap gap-2">
+            {projectsData.data.items.slice(0, 5).map((project) => (
+              <CreateTaskDialog
+                key={project.id}
+                projectId={project.id}
+                trigger={
+                  <button className="inline-flex items-center gap-1.5 rounded-md border px-3 py-1.5 text-sm hover:bg-accent transition-colors">
+                    <Plus className="size-3.5" />
+                    {project.name}
+                  </button>
+                }
+              />
+            ))}
+          </CardContent>
+        </Card>
+      )}
 
       {/* Recent Activity */}
       <Card>
