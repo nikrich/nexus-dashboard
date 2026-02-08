@@ -1,9 +1,10 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { z } from "zod";
 import { toast } from "sonner";
 import { useCreateTask } from "@/hooks/use-task-queries";
+import { useUsers } from "@/hooks/use-user-queries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -25,7 +26,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { Plus } from "lucide-react";
-import type { TaskPriority } from "@/types";
+import type { TaskPriority, TaskStatus } from "@/types";
 
 const createTaskSchema = z.object({
   title: z
@@ -34,14 +35,15 @@ const createTaskSchema = z.object({
     .max(200, "Title must be 200 characters or less"),
   description: z
     .string()
-    .min(1, "Description is required")
-    .max(2000, "Description must be 2000 characters or less"),
+    .max(2000, "Description must be 2000 characters or less")
+    .optional()
+    .default(""),
   priority: z.enum(["low", "medium", "high", "critical"], {
     required_error: "Priority is required",
   }),
+  status: z.enum(["todo", "in_progress", "review", "done"]).optional(),
   assigneeId: z.string().optional(),
   dueDate: z.string().optional(),
-  tags: z.array(z.string()).optional(),
 });
 
 type CreateTaskFormData = z.infer<typeof createTaskSchema>;
@@ -53,57 +55,76 @@ const PRIORITY_OPTIONS: { value: TaskPriority; label: string }[] = [
   { value: "critical", label: "Critical" },
 ];
 
+const STATUS_OPTIONS: { value: TaskStatus; label: string }[] = [
+  { value: "todo", label: "Todo" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "review", label: "Review" },
+  { value: "done", label: "Done" },
+];
+
 interface CreateTaskDialogProps {
   projectId: string;
+  defaultStatus?: TaskStatus;
   trigger?: React.ReactNode;
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 export function CreateTaskDialog({
   projectId,
+  defaultStatus = "todo",
   trigger,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: CreateTaskDialogProps) {
-  const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? controlledOpen : internalOpen;
+
   const [errors, setErrors] = useState<
     Partial<Record<keyof CreateTaskFormData, string>>
   >({});
   const [priority, setPriority] = useState<TaskPriority>("medium");
-  const [tagInput, setTagInput] = useState("");
-  const [tags, setTags] = useState<string[]>([]);
+  const [status, setStatus] = useState<TaskStatus>(defaultStatus);
+  const [assigneeId, setAssigneeId] = useState<string>("");
   const createTask = useCreateTask(projectId);
+  const { data: usersData } = useUsers();
+  const users = usersData?.data ?? [];
 
-  function handleAddTag() {
-    if (tagInput.trim() && !tags.includes(tagInput.trim())) {
-      setTags([...tags, tagInput.trim()]);
-      setTagInput("");
+  const handleOpenChange = useCallback((nextOpen: boolean) => {
+    if (nextOpen) {
+      setStatus(defaultStatus);
+      setPriority("medium");
+      setAssigneeId("");
+      setErrors({});
     }
-  }
-
-  function handleRemoveTag(tag: string) {
-    setTags(tags.filter((t) => t !== tag));
-  }
+    if (isControlled) {
+      controlledOnOpenChange?.(nextOpen);
+    } else {
+      setInternalOpen(nextOpen);
+    }
+  }, [defaultStatus, isControlled, controlledOnOpenChange]);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setErrors({});
 
     const formData = new FormData(e.currentTarget);
-    const data = {
+    const data: Record<string, unknown> = {
       title: formData.get("title") as string,
-      description: formData.get("description") as string,
-      priority: priority,
-      assigneeId: formData.get("assigneeId") as string | undefined,
-      dueDate: formData.get("dueDate") as string | undefined,
-      tags: tags.length > 0 ? tags : undefined,
+      description: (formData.get("description") as string) || "",
+      priority,
+      status,
+      assigneeId: (assigneeId && assigneeId !== "none") ? assigneeId : undefined,
+      dueDate: (formData.get("dueDate") as string) || undefined,
     };
 
-    // Remove empty optional fields
     if (!data.assigneeId) delete data.assigneeId;
     if (!data.dueDate) delete data.dueDate;
 
     const result = createTaskSchema.safeParse(data);
     if (!result.success) {
-      const fieldErrors: Partial<Record<keyof CreateTaskFormData, string>> =
-        {};
+      const fieldErrors: Partial<Record<keyof CreateTaskFormData, string>> = {};
       for (const issue of result.error.issues) {
         const field = issue.path[0] as keyof CreateTaskFormData;
         fieldErrors[field] = issue.message;
@@ -115,10 +136,7 @@ export function CreateTaskDialog({
     try {
       await createTask.mutateAsync(result.data);
       toast.success("Task created successfully");
-      setOpen(false);
-      setPriority("medium");
-      setTags([]);
-      (e.target as HTMLFormElement).reset();
+      handleOpenChange(false);
     } catch (err) {
       toast.error(
         err instanceof Error ? err.message : "Failed to create task"
@@ -127,15 +145,17 @@ export function CreateTaskDialog({
   }
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        {trigger || (
-          <Button>
-            <Plus />
-            New Task
-          </Button>
-        )}
-      </DialogTrigger>
+    <Dialog open={open} onOpenChange={handleOpenChange}>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          {trigger || (
+            <Button>
+              <Plus />
+              New Task
+            </Button>
+          )}
+        </DialogTrigger>
+      )}
       <DialogContent className="max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Create Task</DialogTitle>
@@ -164,47 +184,68 @@ export function CreateTaskDialog({
               name="description"
               placeholder="Describe the task..."
               rows={3}
-              required
             />
             {errors.description && (
               <p className="text-sm text-destructive">{errors.description}</p>
             )}
           </div>
 
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={status} onValueChange={(v) => setStatus(v as TaskStatus)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {STATUS_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label>Priority</Label>
+              <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
+                <SelectTrigger className="w-full">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  {PRIORITY_OPTIONS.map((opt) => (
+                    <SelectItem key={opt.value} value={opt.value}>
+                      {opt.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+              {errors.priority && (
+                <p className="text-sm text-destructive">{errors.priority}</p>
+              )}
+            </div>
+          </div>
+
           <div className="space-y-2">
-            <Label htmlFor="task-priority">Priority</Label>
-            <Select value={priority} onValueChange={(v) => setPriority(v as TaskPriority)}>
+            <Label>Assignee</Label>
+            <Select value={assigneeId} onValueChange={setAssigneeId}>
               <SelectTrigger className="w-full">
-                <SelectValue />
+                <SelectValue placeholder="Unassigned" />
               </SelectTrigger>
               <SelectContent>
-                {PRIORITY_OPTIONS.map((opt) => (
-                  <SelectItem key={opt.value} value={opt.value}>
-                    {opt.label}
+                <SelectItem value="none">Unassigned</SelectItem>
+                {users.map((user) => (
+                  <SelectItem key={user.id} value={user.id}>
+                    {user.name}
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
-            {errors.priority && (
-              <p className="text-sm text-destructive">{errors.priority}</p>
-            )}
           </div>
 
           <div className="space-y-2">
-            <Label htmlFor="task-assignee">Assignee (optional)</Label>
-            <Input
-              id="task-assignee"
-              name="assigneeId"
-              placeholder="User ID"
-              type="text"
-            />
-            <p className="text-sm text-muted-foreground">
-              Enter the user ID to assign this task
-            </p>
-          </div>
-
-          <div className="space-y-2">
-            <Label htmlFor="task-due-date">Due Date (optional)</Label>
+            <Label htmlFor="task-due-date">Due Date</Label>
             <Input
               id="task-due-date"
               name="dueDate"
@@ -212,60 +253,11 @@ export function CreateTaskDialog({
             />
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="task-tags">Tags (optional)</Label>
-            <div className="flex gap-2">
-              <Input
-                id="task-tags"
-                value={tagInput}
-                onChange={(e) => setTagInput(e.target.value)}
-                placeholder="Add a tag"
-                onKeyDown={(e) => {
-                  if (e.key === "Enter") {
-                    e.preventDefault();
-                    handleAddTag();
-                  }
-                }}
-              />
-              <Button
-                type="button"
-                variant="outline"
-                onClick={handleAddTag}
-                size="sm"
-              >
-                Add
-              </Button>
-            </div>
-            {tags.length > 0 && (
-              <div className="flex flex-wrap gap-2 mt-2">
-                {tags.map((tag) => (
-                  <span
-                    key={tag}
-                    className="inline-flex items-center gap-1 rounded-md bg-secondary px-2 py-1 text-xs font-medium"
-                  >
-                    {tag}
-                    <button
-                      type="button"
-                      onClick={() => handleRemoveTag(tag)}
-                      className="text-muted-foreground hover:text-foreground"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
           <DialogFooter>
             <Button
               type="button"
               variant="outline"
-              onClick={() => {
-                setOpen(false);
-                setPriority("medium");
-                setTags([]);
-              }}
+              onClick={() => handleOpenChange(false)}
             >
               Cancel
             </Button>
