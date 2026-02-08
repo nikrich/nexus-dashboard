@@ -41,7 +41,7 @@ export function AddMemberDialog({
   const [selectedRole, setSelectedRole] = useState<ProjectMemberRole>("member");
 
   const { data: usersResponse, isLoading: isLoadingUsers } = useUsers();
-  const users = usersResponse?.data || [];
+  const users = usersResponse?.data?.items || [];
 
   const addMember = useAddProjectMember(projectId);
 

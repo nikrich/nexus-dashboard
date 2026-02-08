@@ -1,6 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiClient } from "@/lib/api-client";
-import type { ApiResponse, User } from "@/types";
+import type { ApiResponse, PaginatedResponse, User } from "@/types";
 
 export const userKeys = {
   all: ["users"] as const,
@@ -19,7 +19,7 @@ export function useCurrentUser() {
 export function useUsers() {
   return useQuery({
     queryKey: userKeys.lists(),
-    queryFn: () => apiClient.get<ApiResponse<User[]>>("/api/users"),
+    queryFn: () => apiClient.get<ApiResponse<PaginatedResponse<User>>>("/api/users"),
   });
 }
 
