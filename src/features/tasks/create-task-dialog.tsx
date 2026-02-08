@@ -89,7 +89,7 @@ export function CreateTaskDialog({
   const [assigneeId, setAssigneeId] = useState<string>("");
   const createTask = useCreateTask(projectId);
   const { data: usersData } = useUsers();
-  const users = usersData?.data ?? [];
+  const users = usersData?.data?.items ?? [];
 
   const handleOpenChange = useCallback((nextOpen: boolean) => {
     if (nextOpen) {
