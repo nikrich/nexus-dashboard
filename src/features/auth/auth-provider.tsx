@@ -1,33 +1,19 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useAuthStore } from "@/stores/auth-store";
-import { apiClient } from "@/lib/api-client";
-import type { ApiResponse, User } from "@/types";
 
 export function AuthProvider({ children }: { children: React.ReactNode }) {
-  const { token, hydrate, setAuth, clearAuth } = useAuthStore();
-  const hasValidated = useRef(false);
+  const hydrate = useAuthStore((state) => state.hydrate);
 
   useEffect(() => {
     hydrate();
   }, [hydrate]);
 
-  useEffect(() => {
-    if (!token || hasValidated.current) return;
-    hasValidated.current = true;
-
-    // Validate the token by refreshing it - this endpoint actually exists
-    // unlike /api/auth/me which the user service doesn't implement
-    apiClient
-      .post<ApiResponse<{ token: string; user: User }>>("/api/auth/refresh")
-      .then((res) => {
-        setAuth(res.data.token, res.data.user);
-      })
-      .catch(() => {
-        clearAuth();
-      });
-  }, [token, setAuth, clearAuth]);
+  // Token validation happens naturally via the API gateway on every request.
+  // If a token is expired/invalid, the 401 handler in api-client.ts will
+  // clear auth and redirect to /login. No need to eagerly validate here,
+  // which avoids race conditions with login navigation.
 
   return <>{children}</>;
 }
