@@ -66,6 +66,7 @@ export interface AuthResponse {
 // Project types
 export type TaskStatus = "todo" | "in_progress" | "review" | "done";
 export type TaskPriority = "low" | "medium" | "high" | "critical";
+export type ProjectMemberRole = "owner" | "admin" | "member" | "viewer";
 
 export interface Project {
   id: string;
@@ -74,6 +75,15 @@ export interface Project {
   ownerId: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface ProjectMember {
+  id: string;
+  projectId: string;
+  userId: string;
+  role: ProjectMemberRole;
+  addedAt: string;
+  addedBy: string;
 }
 
 export interface Task {
@@ -108,6 +118,15 @@ export interface CreateProjectRequest {
 export interface UpdateProjectRequest {
   name?: string;
   description?: string;
+}
+
+export interface AddProjectMemberRequest {
+  userId: string;
+  role: ProjectMemberRole;
+}
+
+export interface UpdateProjectMemberRequest {
+  role: ProjectMemberRole;
 }
 
 export interface CreateTaskRequest {

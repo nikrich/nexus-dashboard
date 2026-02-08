@@ -6,6 +6,9 @@ import type {
   Project,
   CreateProjectRequest,
   UpdateProjectRequest,
+  ProjectMember,
+  AddProjectMemberRequest,
+  UpdateProjectMemberRequest,
 } from "@/types";
 
 export const projectKeys = {
@@ -15,6 +18,7 @@ export const projectKeys = {
     [...projectKeys.lists(), params] as const,
   details: () => [...projectKeys.all, "detail"] as const,
   detail: (id: string) => [...projectKeys.details(), id] as const,
+  members: (projectId: string) => [...projectKeys.detail(projectId), "members"] as const,
 };
 
 export function useProjects(params?: { page?: number; pageSize?: number; search?: string }) {
@@ -75,6 +79,51 @@ export function useDeleteProject() {
       apiClient.delete<ApiResponse<void>>(`/api/projects/${id}`),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: projectKeys.lists() });
+    },
+  });
+}
+
+export function useProjectMembers(projectId: string) {
+  return useQuery({
+    queryKey: projectKeys.members(projectId),
+    queryFn: () =>
+      apiClient.get<ApiResponse<ProjectMember[]>>(`/api/projects/${projectId}/members`),
+    enabled: !!projectId,
+  });
+}
+
+export function useAddProjectMember(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: AddProjectMemberRequest) =>
+      apiClient.post<ApiResponse<ProjectMember>>(`/api/projects/${projectId}/members`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.members(projectId) });
+    },
+  });
+}
+
+export function useRemoveProjectMember(projectId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (memberId: string) =>
+      apiClient.delete<ApiResponse<void>>(`/api/projects/${projectId}/members/${memberId}`),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.members(projectId) });
+    },
+  });
+}
+
+export function useUpdateProjectMemberRole(projectId: string, memberId: string) {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (data: UpdateProjectMemberRequest) =>
+      apiClient.patch<ApiResponse<ProjectMember>>(`/api/projects/${projectId}/members/${memberId}`, data),
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: projectKeys.members(projectId) });
     },
   });
 }
