@@ -4,6 +4,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useProjects } from "@/hooks/use-project-queries";
 import { useNotifications, useUnreadNotificationCount } from "@/hooks/use-notification-queries";
+import { useGlobalTaskStats } from "@/hooks/use-task-queries";
 import { useAuthStore } from "@/stores/auth-store";
 import { FolderKanban, ListChecks, Bell, Clock } from "lucide-react";
 import Link from "next/link";
@@ -51,13 +52,16 @@ export default function DashboardPage() {
     limit: 5,
   });
 
+  // Fetch global task statistics
+  const { data: totalTasksData, isLoading: totalTasksLoading } = useGlobalTaskStats();
+  const { data: myTasksData, isLoading: myTasksLoading } = useGlobalTaskStats(
+    user?.id ? { assigneeId: user.id } : undefined
+  );
+
   const totalProjects = projectsData?.data.total || 0;
   const unreadCount = unreadCountData?.data.count || 0;
-
-  // For tasks, we'll need to aggregate across projects
-  // Since we don't have a global tasks endpoint, we'll show this as a placeholder for now
-  const totalTasks = 0; // Placeholder - would need to fetch across projects
-  const myTasks = 0; // Placeholder - would need to fetch with assigneeId filter
+  const totalTasks = totalTasksData?.total || 0;
+  const myTasks = myTasksData?.total || 0;
 
   return (
     <div className="space-y-6">
@@ -80,13 +84,13 @@ export default function DashboardPage() {
           title="Total Tasks"
           value={totalTasks}
           icon={ListChecks}
-          isLoading={false}
+          isLoading={totalTasksLoading}
         />
         <StatCard
           title="My Tasks"
           value={myTasks}
           icon={Clock}
-          isLoading={false}
+          isLoading={myTasksLoading}
         />
         <StatCard
           title="Unread Notifications"

@@ -126,59 +126,50 @@ export default function PreferencesPage() {
             </div>
           ) : (
             <>
-              <div className="overflow-x-auto">
-                <table className="w-full">
-                  <thead>
-                    <tr className="border-b">
-                      <th className="text-left py-3 pr-4 font-medium">
-                        Notification Type
-                      </th>
-                      {channels.map((channel) => (
-                        <th
-                          key={channel.key}
-                          className="text-center py-3 px-4 font-medium"
-                        >
-                          {channel.label}
-                        </th>
-                      ))}
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {notificationTypes.map((notificationType) => (
-                      <tr key={notificationType.key} className="border-b">
-                        <td className="py-4 pr-4 font-medium">
-                          {notificationType.label}
-                        </td>
-                        {channels.map((channel) => {
-                          const isEnabled =
-                            preferences?.[notificationType.key]?.includes(
-                              channel.key
-                            ) || false;
+              <div className="grid gap-6">
+                {notificationTypes.map((notificationType) => (
+                  <div
+                    key={notificationType.key}
+                    className="rounded-lg border p-4 space-y-4"
+                  >
+                    <h3 className="font-semibold text-base">
+                      {notificationType.label}
+                    </h3>
+                    <div className="grid gap-4 sm:grid-cols-3">
+                      {channels.map((channel) => {
+                        const isEnabled =
+                          preferences?.[notificationType.key]?.includes(
+                            channel.key
+                          ) || false;
 
-                          return (
-                            <td
-                              key={channel.key}
-                              className="text-center py-4 px-4"
+                        return (
+                          <div
+                            key={channel.key}
+                            className="flex items-center justify-between gap-2 rounded-md border p-3"
+                          >
+                            <label
+                              htmlFor={`${notificationType.key}-${channel.key}`}
+                              className="text-sm font-medium cursor-pointer flex-1"
                             >
-                              <div className="flex justify-center">
-                                <Switch
-                                  checked={isEnabled}
-                                  onCheckedChange={() =>
-                                    toggleChannel(
-                                      notificationType.key,
-                                      channel.key
-                                    )
-                                  }
-                                  disabled={!preferences}
-                                />
-                              </div>
-                            </td>
-                          );
-                        })}
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
+                              {channel.label}
+                            </label>
+                            <Switch
+                              id={`${notificationType.key}-${channel.key}`}
+                              checked={isEnabled}
+                              onCheckedChange={() =>
+                                toggleChannel(
+                                  notificationType.key,
+                                  channel.key
+                                )
+                              }
+                              disabled={!preferences}
+                            />
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
+                ))}
               </div>
 
               <div className="flex justify-end mt-6">
