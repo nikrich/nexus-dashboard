@@ -72,7 +72,7 @@ export default function TaskDetailPage({
   const { data: usersData } = useUsers();
 
   const task = data?.data;
-  const users = usersData?.data ?? [];
+  const users = usersData?.data?.items ?? [];
 
   function handleUpdate(field: string, value: unknown) {
     updateTask.mutate(
