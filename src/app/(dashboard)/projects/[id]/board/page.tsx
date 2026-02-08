@@ -41,7 +41,7 @@ export default function KanbanBoardPage({
 
   const { data, isLoading } = useTasks({
     projectId,
-    pageSize: 200,
+    pageSize: 100,
   });
 
   const tasks = useMemo(() => data?.data?.items ?? [], [data]);
@@ -100,7 +100,7 @@ export default function KanbanBoardPage({
       queryClient.setQueryData(
         taskKeys.list({
           projectId,
-          pageSize: 200,
+          pageSize: 100,
         } as unknown as Record<string, unknown>),
         (old: ApiResponse<{ items: Task[]; total: number; page: number; pageSize: number; hasMore: boolean }> | undefined) => {
           if (!old) return old;
